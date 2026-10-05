@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validar estructura de skill
+        run: |
+          if [ ! -f "SKILL.md" ]; then
+            echo "ERROR: SKILL.md no encontrado"
+            exit 1
+          fi
+
+      - name: Validar frontmatter
+        run: |
+          if ! head -5 SKILL.md | grep -q "^name:"; then
+            echo "ERROR: frontmatter 'name' no encontrado"
+            exit 1
+          fi
+          if ! head -5 SKILL.md | grep -q "^description:"; then
+            echo "ERROR: frontmatter 'description' no encontrado"
+            exit 1
+          fi
+
+      - name: Validar que no hay referencias EDI
+        run: |
+          if grep -qi "EDI" SKILL.md; then
+            echo "ADVERTENCIA: Se encontraron referencias a EDI en SKILL.md"
+            exit 1
+          fi
+
+      - name: Validar README existe
+        run: |
+          if [ ! -f "README.md" ]; then
+            echo "ERROR: README.md no encontrado"
+            exit 1
+          fi
+
+      - name: Validar sintaxis markdown
+        run: |
+          # Verificar que los bloques de código están cerrados
+          count=$(grep -c '```' SKILL.md)
+          if [ $((count % 2)) -ne 0 ]; then
+            echo "ERROR: Bloques de código no cerrados en SKILL.md"
+            exit 1
+          fi
